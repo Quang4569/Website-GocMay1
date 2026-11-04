@@ -1,0 +1,3 @@
+trustLockfile: true
+allowBuilds:
+  esbuild: true

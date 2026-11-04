@@ -1,0 +1,28 @@
+services:
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      DATABASE_PATH: /app/data/gocmay.sqlite
+      COOKIE_SECURE: "false"
+    volumes:
+      - gocmay_data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  gocmay_data:

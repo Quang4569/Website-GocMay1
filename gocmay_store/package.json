@@ -1,0 +1,6 @@
+{
+  "name": "gocmay-store-local-preview",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "node scripts/dev.mjs" }
+}
