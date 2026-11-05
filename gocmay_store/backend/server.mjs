@@ -137,8 +137,6 @@ const products = [
     '/images/sac_du_phong_new.webp',
     'Mẫu mới'
   ],
-
-
   // Ba sản phẩm máy ảnh mới
   [
     7,
@@ -163,11 +161,19 @@ const products = [
     'Máy ảnh Mirrorless',
     'may-anh',
     'Máy ảnh mirrorless cho hành trình của bạn.',
-    18000000,
+    19000000,
     '/images/may_anh_mirrorless.png',
     'Linh hoạt'
+  ],
+  [
+  13,
+  'Máy ảnh Powershot',
+  'may-anh',
+  'Máy ảnh Powershot cho hành trình của bạn.',
+  35000000,
+  '/images/may_anh_new.jpg',
+  'Linh hoạt'
   ]
-
 ];
 
 const insertProduct = db.prepare(`

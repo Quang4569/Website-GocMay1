@@ -166,7 +166,20 @@ export default function App() {
     if (sort === 'price-asc') list = [...list].sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') list = [...list].sort((a, b) => b.price - a.price);
 
-    return list;
+  if (category === 'all' && sort === 'featured') {                          // Sắp theo danh sách của từng sản phẩm    
+  const categoryOrder = {
+    'tripod': 1,                                                           
+    'sac-du-phong': 2,
+    'may-anh': 3
+  };
+
+  list = [...list].sort((a, b) => {
+    return (categoryOrder[a.category] ?? 99) -
+           (categoryOrder[b.category] ?? 99);
+  });
+}
+return list;
+
   }, [products, category, query, price, sort]);
   const lines = cart
     .map(item => ({
