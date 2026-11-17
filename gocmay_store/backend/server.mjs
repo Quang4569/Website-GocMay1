@@ -127,7 +127,6 @@ const products = [
     '/images/sac_du_phong_trang.png',
     'Mỏng nhẹ'
   ],
-
   [
     12,
     'Sạc dự phòng mới',
@@ -166,16 +165,38 @@ const products = [
     'Linh hoạt'
   ],
   [
-  13,
+   13,
   'Máy ảnh Powershot',
   'may-anh',
   'Máy ảnh Powershot cho hành trình của bạn.',
   35000000,
   '/images/may_anh_new.jpg',
   'Linh hoạt'
+  ],
+  [
+    10, 'Máy quay Pocket 2', 'pocket',
+    'Máy quay nhỏ gọn cho những chuyến đi.',
+    1000000, '/images/pocket 2.webp', 'Nhỏ gọn'
+  ],
+
+  [
+    14, 'Máy quay Pocket 4P', 'pocket',
+    'Máy quay dành cho những góc quay sáng tạo.',
+    3000000, '/images/Pocket 4P.png', 'Sáng tạo'
+  ],
+
+  [
+    16, 'Máy quay Pocket Insta360', 'pocket',
+    'Máy quay nhỏ gọn cho các hoạt động hằng ngày.',
+    8000000, '/images/pocket instal360.png','Linh hoạt'
+  ],
+
+  [
+    17, 'Máy quay Pocket', 'pocket',
+    'Máy quay tiện lợi để mang theo.',
+    5000000, '/images/pocket.jpg','Tiện lợi'
   ]
 ];
-
 const insertProduct = db.prepare(`
   INSERT OR IGNORE INTO products
     (id, name, category, description, price, image, label)

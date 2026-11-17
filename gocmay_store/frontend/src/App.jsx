@@ -363,7 +363,7 @@ return list;
             </span>
           </a>
 
-          <nav className="main-nav" aria-label="Menu chính">
+          <nav className="main-nav" aria-label="Menu chính">    {/* Chỉnh sửa thanh navigation (thanh điều hướng) */}
             <a href="#san-pham" onClick={() => setCategory('all')}>
               Tất cả sản phẩm
             </a>
@@ -378,7 +378,12 @@ return list;
 
             <a href="#san-pham" onClick={() => setCategory('may-anh')}>
               Máy ảnh
-            </a>
+            </a> 
+            
+             <a href="#san-pham" onClick={() => setCategory('pocket')}>
+              Pocket
+            </a> 
+           
           </nav>
 
           <div className="header-actions">
@@ -552,79 +557,79 @@ return list;
 
             <span className="section-note">01 — DANH MỤC</span>
           </div>
-
+          
           <div className="category-grid">
-            <button
-              className="category-card category-tripod"
-              onClick={() => browse('tripod')}
-            >
-              <span className="category-copy">
-                <small>01 / GÓC SÁNG TẠO</small>
-                <strong>Tripod</strong>
-                <span>Khám phá <Icon name="arrow" size={16} /></span>
-              </span>
+         <button
+           className="category-card category-tripod"
+           onClick={() => browse('tripod')}
+       > 
+        <span className="category-copy">
+        <small>01 / GÓC SÁNG TẠO</small>
+        <strong>Tripod</strong>
+        <span>Khám phá <Icon name="arrow" size={16} /></span>
+        </span>
 
-              <img src="/images/tripod_du_lich.png" alt="" />
-              <span className="category-circle" />
-            </button>
+         <img src="/images/tripod_du_lich.png" alt="" />
+          <span className="category-circle" />
+          </button>
 
-            <button
-              className="category-card category-power"
-              onClick={() => browse('sac-du-phong')}
-            >
-              <span className="category-copy">
-                <small>02 / LUÔN SẴN SÀNG</small>
-                <strong>Sạc dự phòng</strong>
-                <span>Khám phá <Icon name="arrow" size={16} /></span>
-              </span>
+       <button
+    className="category-card category-power"
+    onClick={() => browse('sac-du-phong')}
+  >
+    <span className="category-copy">
+      <small>02 / LUÔN SẴN SÀNG</small>
+      <strong>Sạc dự phòng</strong>
+      <span>Khám phá <Icon name="arrow" size={16} /></span>
+    </span>
 
-              <img src="/images/sac_du_phong_bac.png" alt="" />
-              <span className="category-circle" />
-            </button>
+    <img src="/images/sac_du_phong_bac.png" alt="" />
+    <span className="category-circle" />
+  </button>
 
-            <button
-              className="category-card category-camera"
-              onClick={() => browse('may-anh')}
-            >
-              <span className="category-copy">
-                <small>03 / GÓC NHÌN MỚI</small>
-                <strong>Máy ảnh</strong>
-                <span>Khám phá <Icon name="arrow" size={16} /></span>
-              </span>
+  <button
+    className="category-card category-camera"
+    onClick={() => browse('may-anh')}
+  >
+    <span className="category-copy">
+      <small>03 / GÓC NHÌN MỚI</small>
+      <strong>Máy ảnh</strong>
+      <span>Khám phá <Icon name="arrow" size={16} /></span>
+    </span>
 
-              <img src="/images/may_anh_mirrorless.png" alt="" />
-              <span className="category-circle" />
-            </button>
-          </div>
+    <img src="/images/may_anh_mirrorless.png" alt="" />
+    <span className="category-circle" />
+  </button>
+
+  <button
+    className="category-card category-pocket"
+    onClick={() => browse('pocket')}
+  >
+    <span className="category-copy">
+      <small>04 / GÓC QUAY DI ĐỘNG</small>
+      <strong>Pocket</strong>
+      <span>Khám phá <Icon name="arrow" size={16} /></span>
+    </span>
+
+    <img src="/images/pocket 2.webp" alt="" />
+    <span className="category-circle" />
+  </button>
+</div>
+       
         </section>
-
         <section
           className="catalog shell"
           id="san-pham"
           aria-labelledby="product-heading"
         >
-          <div className="section-top">
-            <div>
-              <div className="eyebrow dark-eyebrow">NHỮNG MÓN ĐỒ HAY HO</div>
-
-              <h2 id="product-heading">
-                Chọn một người bạn đồng hành
-                <span className="heading-dot">.</span>
-              </h2>
-
-              <p>Những phụ kiện nhỏ cho những hành trình lớn.</p>
-            </div>
-
-            <span className="section-note">02 — SẢN PHẨM</span>
-          </div>
-
           <div className="catalog-tools">
             <div className="filter-pills" role="group" aria-label="Lọc theo danh mục">
               {[
                 ['all', 'Tất cả'],
                 ['tripod', 'Tripod'],
                 ['sac-du-phong', 'Sạc dự phòng'],
-                ['may-anh', 'Máy ảnh']
+                ['may-anh', 'Máy ảnh'],
+                ['pocket', 'Pocket'],
               ].map(([value, label]) => (
                 <button
                   key={value}
