@@ -343,9 +343,7 @@ return list;
       <div className="announcement">
         <span className="announce-dot" />
         CHÀO MỪNG ĐẾN GÓC MÁY -NƠI Ý TƯỞNG SÁNG TẠO BẮT ĐẦU    
-        <span>✳</span>
       </div>
-
       <header className="header">
         <div className="header-main shell">
           <a
@@ -521,37 +519,10 @@ return list;
         </section>
 
         <section className="intro-strip shell" aria-label="Giới thiệu">
-          <div>
-            <span className="intro-icon">✳</span>
-            <div>
-              <strong>Cho những ý tưởng của bạn</strong>
-              <small>Phụ kiện cho cuộc sống sáng tạo</small>
-            </div>
-          </div>
-
-          <div>
-            <span className="intro-icon">
-              <Icon name="box" size={21} />
-            </span>
-            <div>
-              <strong>Đơn hàng dễ theo dõi</strong>
-              <small>Xem lại ngay trong tài khoản</small>
-            </div>
-          </div>
-
-          <div>
-            <span className="intro-icon">⌁</span>
-            <div>
-              <strong>Trải nghiệm đơn giản</strong>
-              <small>Chọn nhanh, đặt hàng dễ dàng</small>
-            </div>
-          </div>
         </section>
-
         <section className="categories shell" aria-labelledby="category-heading">
           <div className="section-top">
             <div>
-              <div className="eyebrow dark-eyebrow">CHỌN THEO NHU CẦU</div>
               <h2 id="category-heading">Hôm nay bạn tìm gì?</h2>
             </div>
 
@@ -569,7 +540,7 @@ return list;
         <span>Khám phá <Icon name="arrow" size={16} /></span>
         </span>
 
-         <img src="/images/tripod_du_lich.png" alt="" />
+         <img src="/images/Tripoddulich.png" alt="" />
           <span className="category-circle" />
           </button>
 

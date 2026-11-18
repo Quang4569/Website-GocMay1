@@ -1,211 +1,36 @@
+
 import http from 'node:http';
-import { DatabaseSync } from 'node:sqlite';
-import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import mysql from 'mysql2/promise';
+import {
+  createHash,
+  randomBytes,
+  randomUUID,
+  scryptSync,
+  timingSafeEqual
+} from 'node:crypto';
 
+// Database schema and existing records must be migrated
+// from SQLite before starting this API.
+// No automatic product seeding.
 const port = Number(process.env.PORT || 3001);
-const databasePath = resolve(process.env.DATABASE_PATH || './data/gocmay.sqlite');
 
-mkdirSync(dirname(databasePath), { recursive: true });
-
-const db = new DatabaseSync(databasePath);
-
-db.exec(`
-  PRAGMA foreign_keys = ON;
-  PRAGMA journal_mode = WAL;
-
-  CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    description TEXT NOT NULL,
-    price INTEGER NOT NULL,
-    image TEXT NOT NULL,
-    label TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS sessions (
-    token_hash TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    expires_at INTEGER NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS orders (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
-    customer_name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    address TEXT NOT NULL,
-    note TEXT NOT NULL DEFAULT '',
-    total INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'Mới tạo',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS order_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id INTEGER NOT NULL REFERENCES products(id),
-    name TEXT NOT NULL,
-    image TEXT NOT NULL,
-    price INTEGER NOT NULL,
-    quantity INTEGER NOT NULL
-  );
-`);
-
-// Giá và mô tả sản phẩm mang tính minh họa.
-const products = [
-  [
-    1,
-    'Tripod du lịch',
-    'tripod',
-    'Chân máy gọn gàng cho những chuyến đi và góc chụp linh hoạt.',
-    890000,
-    '/images/tripod_du_lich.png',
-    'Dễ mang theo'
-  ],
-  [
-    2,
-    'Tripod mini để bàn',
-    'tripod',
-    'Một người bạn nhỏ cho góc làm việc, học tập và sáng tạo.',
-    290000,
-    '/images/tripod_mini_de_ban.png',
-    'Nhỏ gọn'
-  ],
-  [
-    3,
-    'Tripod quay video',
-    'tripod',
-    'Chân máy dáng vững chắc, phù hợp làm mẫu cho góc quay.',
-    1500000,
-    '/images/tripod_quay_video.png',
-    'Góc quay'
-  ],
-  [
-    11,
-    'Tripod mới',
-    'tripod',
-    'Chân máy hỗ trợ chụp ảnh và quay video.',
-    650000,
-    '/images/Tripodnew.webp',
-    'Mẫu mới'
-  ],
-  [
-    4,
-    'Sạc dự phòng màu bạc',
-    'sac-du-phong',
-    'Thiết kế màu bạc gọn gàng, đồng hành cùng các thiết bị.',
-    590000,
-    '/images/sac_du_phong_bac.png',
-    'Thiết kế bạc'
-  ],
-  [
-    5,
-    'Sạc dự phòng màu đen',
-    'sac-du-phong',
-    'Thiết kế màu đen tối giản cho những ngày di chuyển.',
-    490000,
-    '/images/sac_du_phong_den.png',
-    'Tối giản'
-  ],
-  [
-    6,
-    'Sạc dự phòng màu trắng',
-    'sac-du-phong',
-    'Một lựa chọn sáng màu và tinh gọn cho mỗi hành trình.',
-    390000,
-    '/images/sac_du_phong_trang.png',
-    'Mỏng nhẹ'
-  ],
-  [
-    12,
-    'Sạc dự phòng mới',
-    'sac-du-phong',
-    'Sạc dự phòng tiện lợi cho mọi hành trình.',
-    450000,
-    '/images/sac_du_phong_new.webp',
-    'Mẫu mới'
-  ],
-  // Ba sản phẩm máy ảnh mới
-  [
-    7,
-    'Máy ảnh Compact',
-    'may-anh',
-    'Máy ảnh nhỏ gọn cho những khoảnh khắc thường ngày.',
-    12000000,
-    '/images/may_anh_compact.png',
-    'Nhỏ gọn'
-  ],
-  [
-    8,
-    'Máy ảnh DSLR',
-    'may-anh',
-    'Máy ảnh DSLR cho những góc chụp sáng tạo.',
-    13000000,
-    '/images/may_anh_DSLR.png',
-    'Sáng tạo'
-  ],
-  [
-    9,
-    'Máy ảnh Mirrorless',
-    'may-anh',
-    'Máy ảnh mirrorless cho hành trình của bạn.',
-    19000000,
-    '/images/may_anh_mirrorless.png',
-    'Linh hoạt'
-  ],
-  [
-   13,
-  'Máy ảnh Powershot',
-  'may-anh',
-  'Máy ảnh Powershot cho hành trình của bạn.',
-  35000000,
-  '/images/may_anh_new.jpg',
-  'Linh hoạt'
-  ],
-  [
-    10, 'Máy quay Pocket 2', 'pocket',
-    'Máy quay nhỏ gọn cho những chuyến đi.',
-    1000000, '/images/pocket 2.webp', 'Nhỏ gọn'
-  ],
-
-  [
-    14, 'Máy quay Pocket 4P', 'pocket',
-    'Máy quay dành cho những góc quay sáng tạo.',
-    3000000, '/images/Pocket 4P.png', 'Sáng tạo'
-  ],
-
-  [
-    16, 'Máy quay Pocket Insta360', 'pocket',
-    'Máy quay nhỏ gọn cho các hoạt động hằng ngày.',
-    8000000, '/images/pocket instal360.png','Linh hoạt'
-  ],
-
-  [
-    17, 'Máy quay Pocket', 'pocket',
-    'Máy quay tiện lợi để mang theo.',
-    5000000, '/images/pocket.jpg','Tiện lợi'
-  ]
-];
-const insertProduct = db.prepare(`
-  INSERT OR IGNORE INTO products
-    (id, name, category, description, price, image, label)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`);
-
-for (const product of products) {
-  insertProduct.run(...product);
+for (const key of ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME']) {
+  if (!process.env[key]) {
+    throw new Error(`Missing environment variable: ${key}`);
+  }
 }
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  charset: 'utf8mb4',
+  dateStrings: true
+});
 
 const send = (res, status, data, headers = {}) => {
   res.writeHead(status, {
@@ -218,37 +43,37 @@ const send = (res, status, data, headers = {}) => {
   res.end(JSON.stringify(data));
 };
 
-const error = (res, status, message) => {
-  return send(res, status, { error: message });
-};
+const error = (res, status, message) =>
+  send(res, status, { error: message });
 
-const clean = (value, max) => {
-  return String(value ?? '').trim().slice(0, max);
-};
+const clean = (value, max) =>
+  String(value ?? '').trim().slice(0, max);
 
-const hashToken = token => {
-  return createHash('sha256').update(token).digest('hex');
-};
+const hashToken = token =>
+  createHash('sha256').update(token).digest('hex');
 
 const sessionLifetime = 7 * 24 * 60 * 60 * 1000;
 
 function cookieFor(token, maxAge = sessionLifetime / 1000) {
-  const secure = process.env.COOKIE_SECURE === 'true' ? '; Secure' : '';
+  const secure = process.env.COOKIE_SECURE === 'true'
+    ? '; Secure'
+    : '';
 
   return `gocmay_sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
-function createSession(userId) {
+async function createSession(userId) {
   const token = randomBytes(32).toString('hex');
 
-  db.prepare(
-    'INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)'
-  ).run(hashToken(token), userId, Date.now() + sessionLifetime);
+  await pool.execute(
+    'INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)',
+    [hashToken(token), userId, Date.now() + sessionLifetime]
+  );
 
   return token;
 }
 
-function getSession(req) {
+function getSessionToken(req) {
   const cookie = (req.headers.cookie || '')
     .split(';')
     .map(part => part.trim())
@@ -256,16 +81,22 @@ function getSession(req) {
 
   const token = cookie?.slice('gocmay_sid='.length) || '';
 
-  if (!/^[a-f0-9]{64}$/.test(token)) {
-    return null;
-  }
+  return /^[a-f0-9]{64}$/.test(token) ? token : null;
+}
 
-  return db.prepare(`
+async function getSession(req) {
+  const token = getSessionToken(req);
+
+  if (!token) return null;
+
+  const [rows] = await pool.execute(`
     SELECT users.id, users.name, users.email
     FROM sessions
     JOIN users ON users.id = sessions.user_id
     WHERE token_hash = ? AND expires_at > ?
-  `).get(hashToken(token), Date.now()) || null;
+  `, [hashToken(token), Date.now()]);
+
+  return rows[0] || null;
 }
 
 function passwordHash(password) {
@@ -275,16 +106,20 @@ function passwordHash(password) {
 }
 
 function checkPassword(password, stored) {
-  const [salt, hash] = stored.split(':');
+  const [salt, hash] = String(stored || '').split(':');
 
-  if (!salt || !hash) {
+  if (!salt || !hash || !/^[a-f0-9]+$/i.test(hash)) {
     return false;
   }
 
   const expected = Buffer.from(hash, 'hex');
+
+  if (!expected.length) return false;
+
   const actual = scryptSync(password, salt, expected.length);
 
-  return expected.length === actual.length && timingSafeEqual(expected, actual);
+  return expected.length === actual.length &&
+    timingSafeEqual(expected, actual);
 }
 
 async function readBody(req) {
@@ -309,13 +144,19 @@ async function readBody(req) {
   }
 }
 
-const getProduct = db.prepare('SELECT * FROM products WHERE id = ?');
+async function getProduct(id) {
+  const [rows] = await pool.execute(
+    'SELECT * FROM products WHERE id = ?',
+    [id]
+  );
 
-const safeUser = user => {
-  return user
+  return rows[0] || null;
+}
+
+const safeUser = user =>
+  user
     ? { id: user.id, name: user.name, email: user.email }
     : null;
-};
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -323,14 +164,25 @@ const server = http.createServer(async (req, res) => {
     const path = url.pathname;
     const method = req.method;
 
+    // HEALTH CHECK
     if (method === 'GET' && path === '/api/health') {
+      await pool.query('SELECT 1');
+
       return send(res, 200, { status: 'ok' });
     }
 
+    // PRODUCT LIST
     if (method === 'GET' && path === '/api/products') {
-      const q = clean(url.searchParams.get('q'), 100).toLowerCase();
-      const category = clean(url.searchParams.get('category'), 32);
+      const q = clean(url.searchParams.get('q'), 100)
+        .toLowerCase();
+
+      const category = clean(
+        url.searchParams.get('category'),
+        32
+      );
+
       const min = Number(url.searchParams.get('min') || 0);
+
       const max = Number(
         url.searchParams.get('max') || Number.MAX_SAFE_INTEGER
       );
@@ -344,40 +196,45 @@ const server = http.createServer(async (req, res) => {
         return error(res, 400, 'Khoảng giá không hợp lệ.');
       }
 
-      let list = db.prepare('SELECT * FROM products ORDER BY id').all();
+      const [rows] = await pool.query(
+        'SELECT * FROM products ORDER BY id'
+      );
 
-      list = list.filter(p =>
+      const list = rows.filter(p =>
         (!q || `${p.name} ${p.description}`.toLowerCase().includes(q)) &&
         (!category || category === 'all' || p.category === category) &&
-        p.price >= min &&
-        p.price <= max
+        Number(p.price) >= min &&
+        Number(p.price) <= max
       );
 
       if (url.searchParams.get('sort') === 'price-asc') {
-        list.sort((a, b) => a.price - b.price);
-      }
-
-      if (url.searchParams.get('sort') === 'price-desc') {
-        list.sort((a, b) => b.price - a.price);
+        list.sort((a, b) => Number(a.price) - Number(b.price));
+      } else if (url.searchParams.get('sort') === 'price-desc') {
+        list.sort((a, b) => Number(b.price) - Number(a.price));
       }
 
       return send(res, 200, { products: list });
     }
 
+    // PRODUCT DETAIL
     const productMatch = path.match(/^\/api\/products\/(\d+)$/);
 
     if (method === 'GET' && productMatch) {
-      const product = getProduct.get(Number(productMatch[1]));
+      const product = await getProduct(Number(productMatch[1]));
 
       return product
         ? send(res, 200, { product })
         : error(res, 404, 'Không tìm thấy sản phẩm.');
     }
 
+    // CURRENT USER
     if (method === 'GET' && path === '/api/auth/me') {
-      return send(res, 200, { user: safeUser(getSession(req)) });
+      return send(res, 200, {
+        user: safeUser(await getSession(req))
+      });
     }
 
+    // REGISTER
     if (method === 'POST' && path === '/api/auth/register') {
       let body;
 
@@ -404,7 +261,12 @@ const server = http.createServer(async (req, res) => {
         );
       }
 
-      if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
+      const [existing] = await pool.execute(
+        'SELECT id FROM users WHERE email = ?',
+        [email]
+      );
+
+      if (existing.length) {
         return error(res, 409, 'Email này đã được đăng ký.');
       }
 
@@ -414,12 +276,19 @@ const server = http.createServer(async (req, res) => {
         email
       };
 
-      db.prepare(`
-        INSERT INTO users (id, name, email, password_hash)
-        VALUES (?, ?, ?, ?)
-      `).run(user.id, name, email, passwordHash(password));
+      try {
+        await pool.execute(
+          'INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)',
+          [user.id, name, email, passwordHash(password)]
+        );
+      } catch (e) {
+        if (e.code === 'ER_DUP_ENTRY') {
+          return error(res, 409, 'Email này đã được đăng ký.');
+        }
+        throw e;
+      }
 
-      const token = createSession(user.id);
+      const token = await createSession(user.id);
 
       return send(
         res,
@@ -429,6 +298,7 @@ const server = http.createServer(async (req, res) => {
       );
     }
 
+    // LOGIN
     if (method === 'POST' && path === '/api/auth/login') {
       let body;
 
@@ -440,7 +310,13 @@ const server = http.createServer(async (req, res) => {
 
       const email = clean(body.email, 254).toLowerCase();
       const password = String(body.password || '');
-      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+
+      const [rows] = await pool.execute(
+        'SELECT * FROM users WHERE email = ?',
+        [email]
+      );
+
+      const user = rows[0];
 
       if (
         !user ||
@@ -450,7 +326,7 @@ const server = http.createServer(async (req, res) => {
         return error(res, 401, 'Email hoặc mật khẩu chưa đúng.');
       }
 
-      const token = createSession(user.id);
+      const token = await createSession(user.id);
 
       return send(
         res,
@@ -460,17 +336,15 @@ const server = http.createServer(async (req, res) => {
       );
     }
 
+    // LOGOUT
     if (method === 'POST' && path === '/api/auth/logout') {
-      const cookie = (req.headers.cookie || '')
-        .split(';')
-        .map(part => part.trim())
-        .find(part => part.startsWith('gocmay_sid='));
+      const token = getSessionToken(req);
 
-      const token = cookie?.slice('gocmay_sid='.length) || '';
-
-      if (/^[a-f0-9]{64}$/.test(token)) {
-        db.prepare('DELETE FROM sessions WHERE token_hash = ?')
-          .run(hashToken(token));
+      if (token) {
+        await pool.execute(
+          'DELETE FROM sessions WHERE token_hash = ?',
+          [hashToken(token)]
+        );
       }
 
       return send(
@@ -481,40 +355,46 @@ const server = http.createServer(async (req, res) => {
       );
     }
 
+    // ORDER HISTORY
     if (path === '/api/orders' && method === 'GET') {
-      const user = getSession(req);
+      const user = await getSession(req);
 
       if (!user) {
         return error(res, 401, 'Vui lòng đăng nhập.');
       }
 
-      const orders = db.prepare(`
-        SELECT id, customer_name, phone, address, note, total, status, created_at
+      const [orders] = await pool.execute(`
+        SELECT id, customer_name, phone, address, note,
+               total, status, created_at
         FROM orders
         WHERE user_id = ?
-        ORDER BY created_at DESC, rowid DESC
-      `).all(user.id);
+        ORDER BY created_at DESC, id DESC
+      `, [user.id]);
 
-      const getItems = db.prepare(`
-        SELECT product_id, name, image, price, quantity
-        FROM order_items
-        WHERE order_id = ?
-        ORDER BY id
-      `);
+      for (const order of orders) {
+        const [items] = await pool.execute(`
+          SELECT product_id, name, image, price, quantity
+          FROM order_items
+          WHERE order_id = ?
+          ORDER BY id
+        `, [order.id]);
 
-      return send(res, 200, {
-        orders: orders.map(order => ({
-          ...order,
-          items: getItems.all(order.id)
-        }))
-      });
+        order.items = items;
+      }
+
+      return send(res, 200, { orders });
     }
 
+    // CREATE ORDER
     if (path === '/api/orders' && method === 'POST') {
-      const user = getSession(req);
+      const user = await getSession(req);
 
       if (!user) {
-        return error(res, 401, 'Vui lòng đăng nhập trước khi đặt hàng.');
+        return error(
+          res,
+          401,
+          'Vui lòng đăng nhập trước khi đặt hàng.'
+        );
       }
 
       let body;
@@ -565,40 +445,64 @@ const server = http.createServer(async (req, res) => {
           return error(res, 400, 'Số lượng sản phẩm không hợp lệ.');
         }
 
-        combined.set(id, (combined.get(id) || 0) + quantity);
+        combined.set(
+          id,
+          (combined.get(id) || 0) + quantity
+        );
 
         if (combined.get(id) > 99) {
-          return error(res, 400, 'Mỗi sản phẩm tối đa 99 đơn vị.');
+          return error(
+            res,
+            400,
+            'Mỗi sản phẩm tối đa 99 đơn vị.'
+          );
         }
       }
 
-      const lines = [];
-
-      for (const [id, quantity] of combined) {
-        const product = getProduct.get(id);
-
-        if (!product) {
-          return error(res, 400, 'Sản phẩm không còn trong danh mục.');
-        }
-
-        lines.push({ ...product, quantity });
-      }
-
-      const total = lines.reduce(
-        (sum, product) => sum + product.price * product.quantity,
-        0
-      );
-
-      const id = `GM-${randomBytes(6).toString('hex').toUpperCase()}`;
-
-      db.exec('BEGIN IMMEDIATE');
+      const connection = await pool.getConnection();
+      let order;
 
       try {
-        db.prepare(`
+        await connection.beginTransaction();
+
+        const lines = [];
+
+        for (const [id, quantity] of combined) {
+          const [rows] = await connection.execute(
+            'SELECT * FROM products WHERE id = ?',
+            [id]
+          );
+
+          const product = rows[0];
+
+          if (!product) {
+            await connection.rollback();
+
+            return error(
+              res,
+              400,
+              'Sản phẩm không còn trong danh mục.'
+            );
+          }
+
+          lines.push({ ...product, quantity });
+        }
+
+        const total = lines.reduce(
+          (sum, product) =>
+            sum + Number(product.price) * product.quantity,
+          0
+        );
+
+        const id = `GM-${randomBytes(6)
+          .toString('hex')
+          .toUpperCase()}`;
+
+        await connection.execute(`
           INSERT INTO orders
             (id, user_id, customer_name, phone, address, note, total)
           VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(
+        `, [
           id,
           user.id,
           customerName,
@@ -606,38 +510,43 @@ const server = http.createServer(async (req, res) => {
           address,
           note,
           total
-        );
-
-        const add = db.prepare(`
-          INSERT INTO order_items
-            (order_id, product_id, name, image, price, quantity)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `);
+        ]);
 
         for (const product of lines) {
-          add.run(
+          await connection.execute(`
+            INSERT INTO order_items
+              (order_id, product_id, name, image, price, quantity)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `, [
             id,
             product.id,
             product.name,
             product.image,
             product.price,
             product.quantity
-          );
+          ]);
         }
 
-        db.exec('COMMIT');
-      } catch (e) {
-        db.exec('ROLLBACK');
-        throw e;
-      }
+        await connection.commit();
 
-      return send(res, 201, {
-        order: {
+        order = {
           id,
           total,
           status: 'Mới tạo'
+        };
+      } catch (e) {
+        try {
+          await connection.rollback();
+        } catch (rollbackError) {
+          console.error('Rollback error:', rollbackError);
         }
-      });
+
+        throw e;
+      } finally {
+        connection.release();
+      }
+
+      return send(res, 201, { order });
     }
 
     return error(res, 404, 'Không tìm thấy đường dẫn.');
@@ -645,21 +554,57 @@ const server = http.createServer(async (req, res) => {
     console.error('Request error:', e);
 
     if (!res.headersSent) {
-      return error(res, 500, 'Hệ thống đang gặp lỗi. Vui lòng thử lại.');
+      return error(
+        res,
+        500,
+        'Hệ thống đang gặp lỗi. Vui lòng thử lại.'
+      );
     }
 
     res.end();
   }
 });
 
-server.listen(port, '0.0.0.0', () => {
-  console.log(`Góc Máy API đang chạy tại cổng ${port}`);
-});
+async function start() {
+  // Verify all required tables exist before starting the API.
+  const [rows] = await pool.query(`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE()
+      AND table_name IN (
+        'products',
+        'users',
+        'sessions',
+        'orders',
+        'order_items'
+      )
+  `);
+
+  if (rows.length !== 5) {
+    throw new Error(
+      'MySQL chưa có đủ 5 bảng. Hãy tạo schema và chuyển dữ liệu trước.'
+    );
+  }
+
+  server.listen(port, '0.0.0.0', () => {
+    console.log(
+      `Góc Máy MySQL API đang chạy tại cổng ${port}`
+    );
+  });
+}
+
 for (const signal of ['SIGTERM', 'SIGINT']) {
-  process.on(signal, () => {
-    server.close(() => {
-      db.close();
+  process.once(signal, () => {
+    server.close(async () => {
+      await pool.end();
       process.exit(0);
     });
   });
 }
+
+start().catch(async e => {
+  console.error('Khởi động MySQL API thất bại:', e);
+
+  await pool.end();
+  process.exitCode = 1;
+});

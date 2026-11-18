@@ -1,3 +1,4 @@
+
 services:
   api:
     build: ./backend
@@ -6,6 +7,11 @@ services:
       PORT: 3001
       DATABASE_PATH: /app/data/gocmay.sqlite
       COOKIE_SECURE: "false"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: gocmay
+      DB_USER: gocmay_user
+      DB_PASSWORD: ${MYSQL_PASSWORD:?Required}
     volumes:
       - gocmay_data:/app/data
     healthcheck:
@@ -24,5 +30,23 @@ services:
       api:
         condition: service_healthy
 
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Required}
+      MYSQL_DATABASE: gocmay
+      MYSQL_USER: gocmay_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Required}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql -h 127.0.0.1 -u\"$$MYSQL_USER\" -D \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
 volumes:
   gocmay_data:
+  mysql_data:
