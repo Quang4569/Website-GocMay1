@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 const slides = [
-  { image: '/images/tripod_du_lich.png', eyebrow: '01 / DÀNH CHO NHỮNG CHUYẾN ĐI', title: <>Giữ trọn góc nhìn.<br /><em>Đi xa hơn.</em></>, text: 'Một góc chụp vững vàng cho những ý tưởng đang chờ bạn khám phá.', category: 'tripod', tag: 'TRIPOD DU LỊCH', tone: 'lime' },
+  { image: '/images/Tripoddulich.png', eyebrow: '01 / DÀNH CHO NHỮNG CHUYẾN ĐI', title: <>Giữ trọn góc nhìn.<br /><em>Đi xa hơn.</em></>, text: 'Một góc chụp vững vàng cho những ý tưởng đang chờ bạn khám phá.', category: 'tripod', tag: 'TRIPOD DU LỊCH', tone: 'lime' },
   { image: '/images/tripod_mini_de_ban.png', eyebrow: '02 / NHỎ GỌN MỖI NGÀY', title: <>Góc nhỏ thôi.<br /><em>Ý tưởng thật lớn.</em></>, text: 'Từ bàn làm việc đến góc sáng tạo, bắt đầu với những điều vừa vặn.', category: 'tripod', tag: 'TRIPOD MINI', tone: 'blue' },
   { image: '/images/tripod_quay_video.png', eyebrow: '03 / SÁNG TẠO THEO CÁCH CỦA BẠN', title: <>Mỗi khung hình<br /><em>đều đáng nhớ.</em></>, text: 'Tạo nên những thước phim mang dấu ấn rất riêng của bạn.', category: 'tripod', tag: 'TRIPOD QUAY VIDEO', tone: 'sand' },
   { image: '/images/sac_du_phong_bac.png', eyebrow: '04 / NĂNG LƯỢNG LUÔN SẴN SÀNG', title: <>Thêm năng lượng.<br /><em>Thêm hành trình.</em></>, text: 'Một người bạn đồng hành gọn gàng cho những ngày di chuyển.', category: 'sac-du-phong', tag: 'SẠC DỰ PHÒNG BẠC', tone: 'blue' },
